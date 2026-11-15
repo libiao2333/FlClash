@@ -30,10 +30,14 @@ private val Long.formatBytes: String
 val Traffic.speedText: String
     get() = "${up.formatBytes}/s↑  ${down.formatBytes}/s↓"
 
-fun Core.getSpeedTrafficText(onlyStatisticsProxy: Boolean): String {
+/** 状态栏胶囊（setShortCriticalText）用的极简文案，最长约 7 个字符。 */
+val Traffic.shortSpeedText: String
+    get() = "↓${down.formatBytes}/s"
+
+fun Core.getSpeedTraffic(onlyStatisticsProxy: Boolean): Traffic? {
     return runCatching {
-        gson.fromJson(getTraffic(onlyStatisticsProxy), Traffic::class.java).speedText
+        gson.fromJson(getTraffic(onlyStatisticsProxy), Traffic::class.java)
     }.onFailure { error ->
         GlobalState.log("Unable to read traffic: $error")
-    }.getOrDefault("")
+    }.getOrNull()
 }

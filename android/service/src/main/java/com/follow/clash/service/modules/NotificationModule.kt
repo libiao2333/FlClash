@@ -1,11 +1,15 @@
 package com.follow.clash.service.modules
 
+import android.app.Notification
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
+import android.app.NotificationManager
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_REMOVE
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.PowerManager
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import com.follow.clash.common.Components
@@ -20,7 +24,10 @@ import com.follow.clash.core.Core
 import com.follow.clash.service.R
 import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.models.NotificationParams
-import com.follow.clash.service.models.getSpeedTrafficText
+import com.follow.clash.service.models.Traffic
+import com.follow.clash.service.models.getSpeedTraffic
+import com.follow.clash.service.models.shortSpeedText
+import com.follow.clash.service.models.speedText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -31,20 +38,47 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
+/**
+ * Android 16 实时更新（Live Updates，OPPO 侧叫“流体云”）进度条的满量程：
+ * 1MB/s 记为 100%，超过则饱和到 100%。想让低速流量也把进度条顶满，
+ * 把这个值改小即可，例如 256 * 1024。
+ */
+private const val LIVE_UPDATE_FULL_SCALE = 1024L * 1024L
+
+/** 上行速率标记点颜色，对应 systemBlue。 */
+private const val LIVE_UPDATE_UPLOAD_COLOR = 0xFF0A84FF.toInt()
+
 private data class ExtendedNotificationParams(
     val title: String,
     val stopText: String,
     val showStopAction: Boolean,
-    val contentText: String,
-)
+    val traffic: Traffic?,
+) {
+    val contentText: String
+        get() = traffic?.speedText ?: ""
+
+    /** 状态栏胶囊文案，最多约 7 个字符，超出会被系统截断甚至只留图标。 */
+    val shortCriticalText: String
+        get() = traffic?.shortSpeedText ?: ""
+
+    val up: Long
+        get() = traffic?.up ?: 0L
+
+    val down: Long
+        get() = traffic?.down ?: 0L
+}
 
 private val NotificationParams.extended: ExtendedNotificationParams
     get() = ExtendedNotificationParams(
         title,
         stopText,
         showStopAction,
-        Core.getSpeedTrafficText(onlyStatisticsProxy),
+        Core.getSpeedTraffic(onlyStatisticsProxy),
     )
+
+/** 把字节/秒换算成 0..100 的进度值。 */
+private fun Long.toProgressPercent(): Int =
+    (this * 100L / LIVE_UPDATE_FULL_SCALE).coerceIn(0L, 100L).toInt()
 
 internal class NotificationModule(
     private val service: Service,
@@ -87,16 +121,20 @@ internal class NotificationModule(
     private fun isScreenOn() =
         service.getSystemService<PowerManager>()?.isInteractive ?: true
 
-    private val notificationBuilder: NotificationCompat.Builder by lazy {
-        val intent = Intent().setComponent(Components.mainActivity)
+    private val contentIntent by lazy {
+        Intent().setComponent(Components.mainActivity).toPendingIntent
+    }
 
+    private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
+
+    private val notificationBuilder: NotificationCompat.Builder by lazy {
         NotificationCompat.Builder(
             service,
             GlobalState.NOTIFICATION_CHANNEL,
         ).apply {
             setSmallIcon(R.drawable.ic_service)
             setContentTitle("FlClash")
-            setContentIntent(intent.toPendingIntent)
+            setContentIntent(contentIntent)
             setPriority(NotificationCompat.PRIORITY_LOW)
             setCategory(NotificationCompat.CATEGORY_SERVICE)
             setOngoing(true)
@@ -108,21 +146,76 @@ internal class NotificationModule(
         }
     }
 
-    private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
-
     private fun update(params: ExtendedNotificationParams) {
-        service.startForeground(
-            with(notificationBuilder) {
-                setContentTitle(params.title)
-                setContentText(params.contentText)
-                clearActions()
-                if (params.showStopAction) {
-                    addAction(0, params.stopText, stopIntent)
-                }
-                build()
-            },
-        )
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            buildLiveUpdateNotification(params)
+        } else {
+            buildCompatNotification(params)
+        }
+        service.startForeground(notification)
     }
+
+    /** Android 16 及以上：ProgressStyle + 请求提升为实时更新。 */
+    @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+    private fun buildLiveUpdateNotification(params: ExtendedNotificationParams): Notification {
+        // 系统/用户可以在设置里关掉本应用的实时更新，关掉后请求会被忽略，
+        // 通知仍按 ProgressStyle 正常展示，因此这里只把结果用于日志。
+        val canPromote = service.getSystemService<NotificationManager>()
+            ?.canPostPromotedNotifications() == true
+        if (!canPromote) {
+            GlobalState.log("Promoted notifications are unavailable for this app")
+        }
+
+        val progressStyle = Notification.ProgressStyle()
+            // 进度条按下行速率填充，上行速率用一个标记点表示，两者共用 0..100 的刻度。
+            .setProgress(params.down.toProgressPercent())
+            .setProgressPoints(
+                listOf(
+                    Notification.ProgressStyle.Point(params.up.toProgressPercent())
+                        .setColor(LIVE_UPDATE_UPLOAD_COLOR),
+                ),
+            )
+            .setStyledByProgress(true)
+
+        return Notification.Builder(service, GlobalState.NOTIFICATION_CHANNEL).apply {
+            setSmallIcon(R.drawable.ic_service)
+            setContentTitle(params.title)
+            setContentText(params.contentText)
+            setContentIntent(contentIntent)
+            setCategory(Notification.CATEGORY_SERVICE)
+            setOngoing(true)
+            setOnlyAlertOnce(true)
+            setShowWhen(true)
+            setColorized(false)
+            setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
+            // 状态栏胶囊：下行速率的极简文案
+            setShortCriticalText(params.shortCriticalText)
+            // 申请提升为实时更新（流体云），是否真的提升由系统/用户决定
+            setRequestPromotedOngoing(true)
+            setStyle(progressStyle)
+            if (params.showStopAction) {
+                addAction(
+                    Notification.Action.Builder(
+                        Icon.createWithResource(service, R.drawable.ic_service),
+                        params.stopText,
+                        stopIntent,
+                    ).build(),
+                )
+            }
+        }.build()
+    }
+
+    /** Android 15 及以下：保持改造前的普通通知。 */
+    private fun buildCompatNotification(params: ExtendedNotificationParams): Notification =
+        with(notificationBuilder) {
+            setContentTitle(params.title)
+            setContentText(params.contentText)
+            clearActions()
+            if (params.showStopAction) {
+                addAction(0, params.stopText, stopIntent)
+            }
+            build()
+        }
 
     @Suppress("DEPRECATION")
     override fun stop() {

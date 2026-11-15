@@ -1,143 +1,60 @@
-<div align="center">
+# FlClash · 流体云分支
 
-<img src="assets/images/icon.png" alt="FlClash" width="88">
+基于 [FlClash](https://github.com/chen08209/FlClash)（[chen08209/FlClash](https://github.com/chen08209/FlClash)）的个人分支。
+除下面列出的改动外，其余代码与上游保持一致。
 
-# FlClash
+本分支只做一件事：**把 Android 的流量悬浮通知改造成 Android 16 Live Updates（实时更新），以便在 OPPO ColorOS 上以「流体云」的形式展示上下行速率**，并通过 GitHub Actions 自动打出 APK。
 
-A multi-platform proxy client based on ClashMeta. Simple to use, open source and ad-free.
+## 改了什么
 
-**English** · [简体中文](README_zh_CN.md)
+### 1. 声明实时更新权限
 
-[![Release](https://img.shields.io/github/v/release/chen08209/FlClash?style=flat-square&label=release)](https://github.com/chen08209/FlClash/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases)
-[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
-[![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FlClash)
+`android/app/src/main/AndroidManifest.xml` 增加：
 
-[Website](https://chen08209.github.io/FlClash) · [Download](#download) · [Changelog](CHANGELOG.md) · [Build from source](#build-from-source)
-
-</div>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
-    <img alt="FlClash dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
-  </picture>
-</p>
-
-## Features
-
-- **One app for Android, Windows, macOS and Linux**, with x64 and ARM64 builds on the desktop.
-- **mihomo (Clash.Meta) core** with rule routing, proxy groups, latency tests, system proxy and TUN mode.
-- **Profiles** from a subscription link or a file, with a built-in editor, override scripts, and custom rules,
-  proxies and proxy groups.
-- **Live views** of connections, requests, DNS queries and logs.
-- **Material You design with Apple-style interaction**: dynamic color, light and dark themes, continuous corners,
-  sheets that snap between heights, and layouts that adapt from phones to desktops.
-- **Backup and restore** through WebDAV or a local file.
-- **Platform touches**: a Quick Settings tile, per-app proxy and Android TV support on Android; a tray menu and
-  global hotkeys on the desktop.
-- **Open source and ad-free**, licensed under GPL-3.0.
-
-## Download
-
-Get the latest build from [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest), or open the
-[website](https://chen08209.github.io/FlClash#download), which picks the right file for your device.
-
-| Platform | Packages | Notes |
-| --- | --- | --- |
-| Android | APK for `arm64-v8a`, `armeabi-v7a` and `x86_64` | Most phones use `arm64-v8a`. Also on the F-Droid repository below. |
-| Windows 10 and later | Installer (`.exe`) or portable `.zip`, for x64 and ARM64 | Pick ARM64 on Snapdragon and other ARM laptops. |
-| macOS 12 and later | DMG for Apple Silicon and Intel | Also on Homebrew. |
-| Linux | `.deb`, `.rpm` and AppImage, for x64 and ARM64 | See the tray note below. |
-
-<p>
-  <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" height="56"></a>
-  <a href="https://github.com/chen08209/FlClash/releases/latest"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" height="56"></a>
-</p>
-
-**Homebrew**
-
-```bash
-brew tap chen08209/tap
-brew install --cask flclash
+```xml
+<uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 ```
 
-**Linux tray icon**
+这是普通权限，安装即授予，不需要运行时申请。
 
-The `.deb` package installs its own dependencies. With the AppImage or the `.rpm`, install the AyatanaAppIndicator
-library so the tray icon can show:
+### 2. 通知改用 ProgressStyle
 
-```bash
-sudo apt-get install libayatana-appindicator3-1   # Debian and Ubuntu
-sudo dnf install libayatana-appindicator-gtk3     # Fedora
-```
+`android/service/.../modules/NotificationModule.kt`
 
-**Unattended desktop**
+- `SDK_INT >= 36`（`Build.VERSION_CODES.BAKLAVA`）时改用平台 `Notification.Builder` + `Notification.ProgressStyle`：
+  - 进度条按下行速率填充，上行速率用 `ProgressStyle.Point` 打点，两者共用 0–100 刻度；
+  - 换算规则：**1MB/s = 100%**，超过饱和（常量 `LIVE_UPDATE_FULL_SCALE`，想让低速也顶满就调小它）；
+  - `setOngoing(true)` + `setContentTitle(...)` + 无自定义视图，满足提升为实时更新的硬性条件；
+  - `setShortCriticalText("↓3.4MB/s")` 填充状态栏胶囊（系统限制约 7 个字符）；
+  - `setRequestPromotedOngoing(true)` 申请提升为流体云，是否真的提升由系统与用户设置决定，
+    用 `NotificationManager.canPostPromotedNotifications()` 判断资格。
+- `SDK_INT <= 35` 时完全走原来的 `NotificationCompat.Builder` 逻辑，行为与改造前一致。
 
-FlClash starts the core only after the disclaimer is accepted. Where nobody can click it, such as a container, set
-`FLCLASH_ACCEPT_DISCLAIMER=1` in the app's environment to accept it on first launch.
+### 3. 暴露原始流量数值
 
-## Usage
+`android/service/.../models/Traffic.kt`
 
-**Import a profile from a link.** Opening a link in this form imports the subscription into FlClash. The `clashmeta://`
-and `flclash://` schemes work the same way.
+`getSpeedTrafficText()` 改为 `getSpeedTraffic(): Traffic?`，直接返回上下行字节数（进度条需要数值）；
+新增 `Traffic.shortSpeedText` 供状态栏胶囊使用。`speedText` 格式未变。
 
-```text
-clash://install-config?url=<URL-encoded subscription link>
-```
+### 4. 自动构建
 
-**Automate on Android.** Tasker, MacroDroid and similar apps can start, stop or toggle the proxy by starting an
-activity with one of these actions:
+`.github/workflows/build-android.yml`
 
-```text
-com.follow.clash.action.START
-com.follow.clash.action.STOP
-com.follow.clash.action.TOGGLE
-```
+推送到 `main` 即触发：JDK 17 + Go 1.27.1 + Flutter 3.47.6 + NDK r28c，
+拉取子模块、`flutter build apk --release --target-platform android-arm64`，
+产物 `build/app/outputs/flutter-apk/app-release.apk` 上传为 Artifact。
 
-From a computer, the same works over adb:
+需要在仓库 Secrets 里配置 `KEYSTORE`（base64）、`KEY_ALIAS`、`STORE_PASSWORD`、`KEY_PASSWORD`
+才会使用正式签名；不配则用 debug 签名，包名为 `com.follow.clash.dev`。
 
-```bash
-adb shell am start -a com.follow.clash.action.TOGGLE
-```
+## 已知限制
 
-## Build from source
+- 「请求提升」不等于「一定提升」：还需用户在系统设置里允许该应用发布实时更新，且依赖 ROM 实现
+  （ColorOS 需 Android 16 / ColorOS 16 及以上，部分版本只渲染不提升）。
+- 现有逻辑在灭屏后停止刷新通知，锁屏与胶囊上停留的是灭屏前的最后一帧数据。
+- 只构建 `android-arm64` 一种 ABI。
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.6),
-[Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
-host, except Android, which builds anywhere.
+## 许可
 
-```bash
-git clone --recursive https://github.com/chen08209/FlClash.git
-cd FlClash
-flutter pub get
-dart setup.dart android   # or windows, macos, linux
-```
-
-Packages land in `dist/`. The Go core and the Rust libraries are compiled as part of the Flutter build.
-
-| Platform | Also needed |
-| --- | --- |
-| Android | Android SDK with the NDK. Add `--arch arm64` to build a single ABI. |
-| Windows | GCC (MinGW-w64) for the core and [Inno Setup](https://jrsoftware.org/isinfo.php) 6 for the installer. |
-| macOS | Xcode and Node.js. The script installs `appdmg` through npm. |
-| Linux | Debian or Ubuntu. The script installs the build packages with apt and downloads `appimagetool`. |
-
-Run `dart setup.dart --help` for the remaining options, such as `--targets` to build only some package formats.
-
-## Support
-
-Starring the repository is the easiest way to support the project. Questions and announcements go to the
-[Telegram channel](https://t.me/FlClash); bugs and feature requests go to
-[GitHub Issues](https://github.com/chen08209/FlClash/issues).
-
-<a href="https://star-history.com/#chen08209/FlClash&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=chen08209/FlClash&type=Date&theme=dark">
-    <img alt="Star history" src="https://api.star-history.com/svg?repos=chen08209/FlClash&type=Date" width="640">
-  </picture>
-</a>
-
-## License
-
-FlClash is released under the [GPL-3.0 license](LICENSE).
+上游项目以 GPL-3.0 发布，本分支沿用同一许可，见 [LICENSE](LICENSE)。
