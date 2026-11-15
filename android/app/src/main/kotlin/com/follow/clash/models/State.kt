@@ -12,6 +12,9 @@ data class SharedState(
     val stopText: String = "Stop",
     val onlyStatisticsProxy: Boolean = false,
     val showStopAction: Boolean = true,
+    val liveUpdateNotification: Boolean = true,
+    val liveUpdateShowUpload: Boolean = true,
+    val liveUpdateFixedWidth: Boolean = true,
     val vpnOptions: VpnOptions? = null,
     // The Core's own setup params, handed on as Flutter wrote them.
     val setupParams: JsonObject? = null,

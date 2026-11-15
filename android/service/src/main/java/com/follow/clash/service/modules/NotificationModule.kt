@@ -25,9 +25,9 @@ import com.follow.clash.service.R
 import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.Traffic
+import com.follow.clash.service.models.directionalText
+import com.follow.clash.service.models.formatRate
 import com.follow.clash.service.models.getSpeedTraffic
-import com.follow.clash.service.models.shortSpeedText
-import com.follow.clash.service.models.speedText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -53,13 +53,24 @@ private data class ExtendedNotificationParams(
     val stopText: String,
     val showStopAction: Boolean,
     val traffic: Traffic?,
+    val liveUpdate: Boolean,
+    val showUpload: Boolean,
+    val fixedWidth: Boolean,
 ) {
     val contentText: String
-        get() = traffic?.speedText ?: ""
+        get() = traffic?.directionalText ?: ""
 
-    /** 状态栏胶囊文案，最多约 7 个字符，超出会被系统截断甚至只留图标。 */
+    /**
+     * 状态栏胶囊文案：上传在左、下载在右。关掉“显示上传”后只剩下载，
+     * 字符数恒定由 fixedWidth 保证，避免胶囊宽度变化挤压信号/WiFi 图标。
+     */
     val shortCriticalText: String
-        get() = traffic?.shortSpeedText ?: ""
+        get() {
+            val traffic = traffic ?: return ""
+            val down = traffic.down.formatRate(fixedWidth)
+            if (!showUpload) return "↓$down"
+            return "↑${traffic.up.formatRate(fixedWidth)} ↓$down"
+        }
 
     val up: Long
         get() = traffic?.up ?: 0L
@@ -70,10 +81,13 @@ private data class ExtendedNotificationParams(
 
 private val NotificationParams.extended: ExtendedNotificationParams
     get() = ExtendedNotificationParams(
-        title,
-        stopText,
-        showStopAction,
-        Core.getSpeedTraffic(onlyStatisticsProxy),
+        title = title,
+        stopText = stopText,
+        showStopAction = showStopAction,
+        traffic = Core.getSpeedTraffic(onlyStatisticsProxy),
+        liveUpdate = liveUpdateNotification,
+        showUpload = liveUpdateShowUpload,
+        fixedWidth = liveUpdateFixedWidth,
     )
 
 /** 把字节/秒换算成 0..100 的进度值。 */
@@ -147,11 +161,12 @@ internal class NotificationModule(
     }
 
     private fun update(params: ExtendedNotificationParams) {
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-            buildLiveUpdateNotification(params)
-        } else {
-            buildCompatNotification(params)
-        }
+        val notification =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && params.liveUpdate) {
+                buildLiveUpdateNotification(params)
+            } else {
+                buildCompatNotification(params)
+            }
         service.startForeground(notification)
     }
 

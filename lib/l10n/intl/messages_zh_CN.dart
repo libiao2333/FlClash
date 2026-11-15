@@ -1148,6 +1148,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("混淆密码"),
     "onDemand": MessageLookupByLibrary.simpleMessage("按需运行"),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage("仅统计代理流量"),
+    "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
+      "实时更新通知（流体云）",
+    ),
+    "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
+      "状态栏同时显示上传速率",
+    ),
+    "liveUpdateFixedWidth": MessageLookupByLibrary.simpleMessage(
+      "速率数字定宽（防跳动）",
+    ),
     "openSettings": MessageLookupByLibrary.simpleMessage("打开设置"),
     "optional": MessageLookupByLibrary.simpleMessage("可选"),
     "options": MessageLookupByLibrary.simpleMessage("选项"),

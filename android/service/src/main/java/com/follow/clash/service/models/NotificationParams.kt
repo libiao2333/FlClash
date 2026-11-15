@@ -5,4 +5,7 @@ data class NotificationParams(
     val stopText: String = "STOP",
     val onlyStatisticsProxy: Boolean = false,
     val showStopAction: Boolean = true,
+    val liveUpdateNotification: Boolean = true,
+    val liveUpdateShowUpload: Boolean = true,
+    val liveUpdateFixedWidth: Boolean = true,
 )

@@ -1250,6 +1250,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("난독화 비밀번호"),
     "onDemand": MessageLookupByLibrary.simpleMessage("필요 시 실행"),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage("프록시 트래픽만 집계"),
+    "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
+      "Live update notification",
+    ),
+    "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
+      "Show upload speed in status bar",
+    ),
+    "liveUpdateFixedWidth": MessageLookupByLibrary.simpleMessage(
+      "Fixed-width speed text",
+    ),
     "openSettings": MessageLookupByLibrary.simpleMessage("설정 열기"),
     "optional": MessageLookupByLibrary.simpleMessage("선택 사항"),
     "options": MessageLookupByLibrary.simpleMessage("옵션"),

@@ -171,6 +171,9 @@ abstract class SharedState with _$SharedState {
     required String stopText,
     required bool onlyStatisticsProxy,
     @Default(true) bool showStopAction,
+    @Default(true) bool liveUpdateNotification,
+    @Default(true) bool liveUpdateShowUpload,
+    @Default(true) bool liveUpdateFixedWidth,
   }) = _SharedState;
 
   factory SharedState.fromJson(Map<String, Object?> json) =>

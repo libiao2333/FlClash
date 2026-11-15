@@ -1270,6 +1270,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "プロキシトラフィックのみ集計",
     ),
+    "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
+      "Live update notification",
+    ),
+    "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
+      "Show upload speed in status bar",
+    ),
+    "liveUpdateFixedWidth": MessageLookupByLibrary.simpleMessage(
+      "Fixed-width speed text",
+    ),
     "openSettings": MessageLookupByLibrary.simpleMessage("設定を開く"),
     "optional": MessageLookupByLibrary.simpleMessage("任意"),
     "options": MessageLookupByLibrary.simpleMessage("オプション"),

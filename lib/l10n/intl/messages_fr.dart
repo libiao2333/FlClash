@@ -1593,6 +1593,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "Ne compter que le trafic proxy",
     ),
+    "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
+      "Live update notification",
+    ),
+    "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
+      "Show upload speed in status bar",
+    ),
+    "liveUpdateFixedWidth": MessageLookupByLibrary.simpleMessage(
+      "Fixed-width speed text",
+    ),
     "openSettings": MessageLookupByLibrary.simpleMessage(
       "Ouvrir les paramètres",
     ),

@@ -241,7 +241,10 @@ ConfigToggleItem _appSettingToggle({
 class GeneralView extends ConsumerWidget {
   const GeneralView({super.key});
 
-  List<Widget> _startupItems(AppLocalizations appLocalizations) {
+  List<Widget> _startupItems(
+    AppLocalizations appLocalizations, {
+    required bool liveUpdate,
+  }) {
     return [
       if (system.isDesktop) ...[
         _appSettingToggle(
@@ -281,6 +284,26 @@ class GeneralView extends ConsumerWidget {
           update: (state, value) =>
               state.copyWith(showNotificationStopAction: value),
         ),
+        _appSettingToggle(
+          title: (l) => l.liveUpdateNotification,
+          select: (state) => state.liveUpdateNotification,
+          update: (state, value) =>
+              state.copyWith(liveUpdateNotification: value),
+        ),
+        if (liveUpdate) ...[
+          _appSettingToggle(
+            title: (l) => l.liveUpdateShowUpload,
+            select: (state) => state.liveUpdateShowUpload,
+            update: (state, value) =>
+                state.copyWith(liveUpdateShowUpload: value),
+          ),
+          _appSettingToggle(
+            title: (l) => l.liveUpdateFixedWidth,
+            select: (state) => state.liveUpdateFixedWidth,
+            update: (state, value) =>
+                state.copyWith(liveUpdateFixedWidth: value),
+          ),
+        ],
       ],
     ];
   }
@@ -394,6 +417,9 @@ class GeneralView extends ConsumerWidget {
         (state) => state.externalController == ExternalControllerStatus.open,
       ),
     );
+    final liveUpdate = ref.watch(
+      appSettingProvider.select((state) => state.liveUpdateNotification),
+    );
     return BaseScaffold(
       title: appLocalizations.general,
       body: ListView(
@@ -404,7 +430,7 @@ class GeneralView extends ConsumerWidget {
         children: [
           generateSection(
             title: appLocalizations.startupAndBackground,
-            items: _startupItems(appLocalizations),
+            items: _startupItems(appLocalizations, liveUpdate: liveUpdate),
             footer: appLocalizations.autoRunDesc,
           ),
           generateSection(

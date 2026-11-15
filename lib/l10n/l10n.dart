@@ -1566,6 +1566,36 @@ class AppLocalizations {
     );
   }
 
+  /// `Live update notification`
+  String get liveUpdateNotification {
+    return Intl.message(
+      'Live update notification',
+      name: 'liveUpdateNotification',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show upload speed in status bar`
+  String get liveUpdateShowUpload {
+    return Intl.message(
+      'Show upload speed in status bar',
+      name: 'liveUpdateShowUpload',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fixed-width speed text`
+  String get liveUpdateFixedWidth {
+    return Intl.message(
+      'Fixed-width speed text',
+      name: 'liveUpdateFixedWidth',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Pure black mode`
   String get pureBlackMode {
     return Intl.message(

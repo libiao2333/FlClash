@@ -377,6 +377,9 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             stopText = state.stopText,
             onlyStatisticsProxy = state.onlyStatisticsProxy,
             showStopAction = state.showStopAction,
+            liveUpdateNotification = state.liveUpdateNotification,
+            liveUpdateShowUpload = state.liveUpdateShowUpload,
+            liveUpdateFixedWidth = state.liveUpdateFixedWidth,
         )
     }
 }
