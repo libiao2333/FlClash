@@ -1253,6 +1253,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
       "Live update notification",
     ),
+    "notificationDisconnect": MessageLookupByLibrary.simpleMessage(
+      "Disconnect",
+    ),
     "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
       "Show upload speed in status bar",
     ),

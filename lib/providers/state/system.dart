@@ -224,7 +224,7 @@ SharedState sharedState(Ref ref) {
     liveUpdateNotification: appSetting.liveUpdateNotification,
     liveUpdateShowUpload: appSetting.liveUpdateShowUpload,
     liveUpdateFixedWidth: appSetting.liveUpdateFixedWidth,
-    stopText: currentAppLocalizations.stop,
+    stopText: currentAppLocalizations.notificationDisconnect,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,
     localNetworkTip: currentAppLocalizations.localNetworkDeniedTip,

@@ -1566,6 +1566,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Disconnect`
+  String get notificationDisconnect {
+    return Intl.message(
+      'Disconnect',
+      name: 'notificationDisconnect',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Live update notification`
   String get liveUpdateNotification {
     return Intl.message(

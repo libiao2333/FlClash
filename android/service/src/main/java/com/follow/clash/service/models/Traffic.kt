@@ -34,6 +34,14 @@ val Traffic.speedText: String
 val Traffic.directionalText: String
     get() = "↑${up.formatBytes}/s   ↓${down.formatBytes}/s"
 
+/** 展开卡片的大字行：下行。 */
+val Traffic.downRateText: String
+    get() = "↓${down.formatBytes}/s"
+
+/** 展开卡片的第二行：上行。 */
+val Traffic.upRateText: String
+    get() = "↑${up.formatBytes}/s"
+
 /**
  * 状态栏胶囊用的短速率。fixedWidth 为 true 时恒为 4 个字符，
  * 不足的位数用 figure space(U+2007) 补在左侧，避免胶囊宽度来回跳动。

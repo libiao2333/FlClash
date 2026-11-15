@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_REMOVE
 import android.content.Intent
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
@@ -26,8 +25,10 @@ import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.Traffic
 import com.follow.clash.service.models.directionalText
+import com.follow.clash.service.models.downRateText
 import com.follow.clash.service.models.formatRate
 import com.follow.clash.service.models.getSpeedTraffic
+import com.follow.clash.service.models.upRateText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -59,6 +60,14 @@ private data class ExtendedNotificationParams(
 ) {
     val contentText: String
         get() = traffic?.directionalText ?: ""
+
+    /** 展开卡片的大字：下行速率。 */
+    val liveTitle: String
+        get() = traffic?.downRateText ?: title
+
+    /** 展开卡片的第二行：上行速率。 */
+    val liveText: String
+        get() = traffic?.upRateText ?: contentText
 
     /**
      * 状态栏胶囊文案：上传在左、下载在右。关掉“显示上传”后只剩下载，
@@ -194,8 +203,8 @@ internal class NotificationModule(
 
         return Notification.Builder(service, GlobalState.NOTIFICATION_CHANNEL).apply {
             setSmallIcon(R.drawable.ic_service)
-            setContentTitle(params.title)
-            setContentText(params.contentText)
+            setContentTitle(params.liveTitle)
+            setContentText(params.liveText)
             setContentIntent(contentIntent)
             setCategory(Notification.CATEGORY_SERVICE)
             setOngoing(true)
@@ -209,9 +218,10 @@ internal class NotificationModule(
             setRequestPromotedOngoing(true)
             setStyle(progressStyle)
             if (params.showStopAction) {
+                // 不传图标，系统按文字按钮渲染
                 addAction(
                     Notification.Action.Builder(
-                        Icon.createWithResource(service, R.drawable.ic_service),
+                        null,
                         params.stopText,
                         stopIntent,
                     ).build(),

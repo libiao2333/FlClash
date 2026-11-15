@@ -1151,6 +1151,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "liveUpdateNotification": MessageLookupByLibrary.simpleMessage(
       "实时更新通知（流体云）",
     ),
+    "notificationDisconnect": MessageLookupByLibrary.simpleMessage("断开"),
     "liveUpdateShowUpload": MessageLookupByLibrary.simpleMessage(
       "状态栏同时显示上传速率",
     ),
