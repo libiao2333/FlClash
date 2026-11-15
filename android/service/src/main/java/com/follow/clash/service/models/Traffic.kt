@@ -60,7 +60,7 @@ fun Long.formatRate(fixedWidth: Boolean): String {
         value.toInt().coerceAtMost(999).toString()
     }
     val text = number + units[unit]
-    return if (fixedWidth) text.padStart(4, "\u2007") else text
+    return if (fixedWidth) text.padStart(4, '\u2007') else text
 }
 
 fun Core.getSpeedTraffic(onlyStatisticsProxy: Boolean): Traffic? {
