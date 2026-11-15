@@ -98,7 +98,19 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
-        run: flutter build apk --release --target-platform android-arm64
+        run: |
+          # versionCode 必须单调递增，否则装不上旧版本；用 yyMMddHHmm 保证全局递增。
+          build_number=$(date +%y%m%d%H%M)
+          base=$(sed -n 's/^version: *\([0-9.]*\)+.*/\1/p' pubspec.yaml)
+          build_name="${base}-coloros.${{ github.run_number }}"
+          flutter build apk --release --target-platform android-arm64 \
+            --build-name="$build_name" --build-number="$build_number"
+          {
+            echo "### APK"
+            echo ""
+            echo "- versionName: $build_name"
+            echo "- versionCode: $build_number"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
