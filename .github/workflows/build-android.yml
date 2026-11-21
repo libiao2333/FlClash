@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   # 与仓库 .github/workflows/build.yaml 保持一致，改 Flutter 版本前先看 .agents/flutter-upgrade.md
   FLUTTER_VERSION: '3.47.6'
@@ -98,11 +102,20 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # versionCode 必须单调递增，且不能超过 Android 上限 2100000000。
-          # yyMMddHH 现在是 8 位数（约 2600 万），留足余量；精确到小时即可，
-          # 同一小时内重复构建用相同 versionCode 也能覆盖安装。
-          build_number=$(date +%y%m%d%H)
+          # versionCode = YYMMDD + 当日三位序号（001、002…），必须单调递增且不超过 2100000000。
+          # 当天的序号 = 本工作流今天已经触发的运行数（含本次），所以第一次就是 001。
+          day=$(date -u +%y%m%d)
+          seq=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-android.yml/runs?per_page=100" \
+            | jq --arg d "$(date -u +%Y-%m-%d)" \
+              '[.workflow_runs[] | select(.created_at | startswith($d))] | length')
+          # API 不可用时退回 run_number，保证同一个 versionCode 也能覆盖安装。
+          if [ -z "$seq" ] || [ "$seq" -lt 1 ]; then
+            seq=$(( ${{ github.run_number }} % 1000 ))
+          fi
+          build_number="${day}$(printf '%03d' "$seq")"
           base=$(sed -n 's/^version: *\([0-9.]*\)+.*/\1/p' pubspec.yaml)
           build_name="${base}-coloros.${{ github.run_number }}"
           flutter build apk --release --target-platform android-arm64 \
