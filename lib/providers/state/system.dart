@@ -41,7 +41,7 @@ CoreOptions coreOptions(Ref ref) {
 
 @riverpod
 ({PatchClashConfig patchConfig, bool appendSystemDns, bool bypassPrivateRoute})
-setupPatch(Ref ref) {
+    setupPatch(Ref ref) {
   return (
     patchConfig: ref.watch(
       patchClashConfigProvider.select((state) => state.setupOnly),
@@ -50,8 +50,7 @@ setupPatch(Ref ref) {
       networkSettingProvider.select((state) => state.appendSystemDns),
     ),
     // Android's VPN service takes it on its next start instead.
-    bypassPrivateRoute:
-        system.isDesktop &&
+    bypassPrivateRoute: system.isDesktop &&
         ref.watch(
           networkSettingProvider.select((state) => state.bypassPrivateRoute),
         ),

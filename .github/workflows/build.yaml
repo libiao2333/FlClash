@@ -1,9 +1,9 @@
 name: build
 
 on:
+  # 上游原本是 push 到任意分支都跑（含桌面三平台、Dart format 等与本分支无关的任务）。
+  # 本分支只保留打 tag 时的发布构建和手动触发，避免每次提交都刷出一堆失败记录。
   push:
-    branches:
-      - '**'
     tags:
       - 'v*'
   workflow_dispatch:

@@ -81,7 +81,8 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
       AppLifecycleState.hidden ||
       AppLifecycleState.paused ||
-      AppLifecycleState.detached => false,
+      AppLifecycleState.detached =>
+        false,
     };
   }
 
@@ -170,9 +171,7 @@ class _Sidebar extends ConsumerWidget {
       onSelected: onSelected,
       onToggle: canExpand
           ? () {
-              ref
-                  .read(appSettingProvider.notifier)
-                  .update(
+              ref.read(appSettingProvider.notifier).update(
                     (state) =>
                         state.copyWith(sidebarExpanded: !state.sidebarExpanded),
                   );
@@ -195,7 +194,7 @@ class AppSidebarContainer extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(sideWidthProvider.notifier).value =
           ref.read(viewSizeProvider.select((state) => state.width)) -
-          contentWidth;
+              contentWidth;
     });
   }
 
@@ -204,7 +203,7 @@ class AppSidebarContainer extends ConsumerWidget {
     final focusContext = focusNode?.context;
     final preserveNavigationFocus =
         focusContext?.findAncestorWidgetOfExactType<NavigationSidebar>() !=
-        null;
+            null;
     ref.read(currentPageLabelProvider.notifier).toPage(pageLabel);
     if (!preserveNavigationFocus || focusNode == null) {
       return;
