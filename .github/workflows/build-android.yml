@@ -103,6 +103,9 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
           GH_TOKEN: ${{ github.token }}
+          # 没有 release keystore 时产出未签名 APK，由本地 apksigner 手动签名，
+          # 避免 runner 每次临时生成的 debug 签名导致覆盖安装失败。
+          ORG_GRADLE_PROJECT_unsigned: "true"
         run: |
           # versionCode = YYMMDD + 当日三位序号（001、002…），必须单调递增且不超过 2100000000。
           # 当天的序号 = 本工作流今天已经触发的运行数（含本次），所以第一次就是 001。

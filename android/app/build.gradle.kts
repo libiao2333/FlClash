@@ -22,6 +22,10 @@ val hasReleaseSigning = releaseStoreFile.exists() &&
     releaseKeyAlias != null &&
     releaseKeyPassword != null
 
+// -Punsigned（或 ORG_GRADLE_PROJECT_unsigned=true）时产出未签名 APK，
+// 由本地 apksigner 手动签名，避免 CI 的临时 debug 签名导致无法覆盖安装。
+val unsignedRelease = project.hasProperty("unsigned")
+
 android {
     namespace = "com.follow.clash"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -68,6 +72,8 @@ android {
             isShrinkResources = true
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
+            } else if (unsignedRelease) {
+                // 不指定签名，产物为 app-release-unsigned.apk
             } else {
                 signingConfig = signingConfigs.getByName("debug")
                 applicationIdSuffix = ".dev"
