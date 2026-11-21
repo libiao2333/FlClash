@@ -97,7 +97,14 @@ jobs:
       - name: Configure release signing
         if: env.KEYSTORE_BASE64 != ''
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/keystore.jks
+          # secret 里可能混入换行或空白（手机端粘贴长串常被自动折行），必须先剔除再解码
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > android/app/keystore.jks
+          size=$(stat -c%s android/app/keystore.jks)
+          if [ "$size" -lt 1000 ]; then
+            echo "::error::keystore 解码后仅 ${size} 字节，KEYSTORE secret 不完整"
+            exit 1
+          fi
+          echo "keystore ok: ${size} bytes"
           touch android/local.properties
           {
             echo "keyAlias=$KEY_ALIAS"
