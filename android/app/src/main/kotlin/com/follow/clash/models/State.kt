@@ -15,6 +15,8 @@ data class SharedState(
     val liveUpdateNotification: Boolean = true,
     val liveUpdateShowUpload: Boolean = true,
     val liveUpdateFixedWidth: Boolean = true,
+    val trafficUsed: Long = 0L,
+    val trafficTotal: Long = 0L,
     val vpnOptions: VpnOptions? = null,
     // The Core's own setup params, handed on as Flutter wrote them.
     val setupParams: JsonObject? = null,

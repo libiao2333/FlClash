@@ -224,6 +224,17 @@ SharedState sharedState(Ref ref) {
     liveUpdateNotification: appSetting.liveUpdateNotification,
     liveUpdateShowUpload: appSetting.liveUpdateShowUpload,
     liveUpdateFixedWidth: appSetting.liveUpdateFixedWidth,
+    trafficUsed: ref.watch(
+      currentProfileProvider.select((state) {
+        final info = state?.subscriptionInfo;
+        return (info?.upload ?? 0) + (info?.download ?? 0);
+      }),
+    ),
+    trafficTotal: ref.watch(
+      currentProfileProvider.select(
+        (state) => state?.subscriptionInfo?.total ?? 0,
+      ),
+    ),
     stopText: currentAppLocalizations.notificationDisconnect,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,

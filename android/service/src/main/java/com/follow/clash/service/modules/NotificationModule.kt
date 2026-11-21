@@ -58,7 +58,16 @@ private data class ExtendedNotificationParams(
     val liveUpdate: Boolean,
     val showUpload: Boolean,
     val fixedWidth: Boolean,
+    val trafficUsed: Long,
+    val trafficTotal: Long,
 ) {
+    /** 套餐流量已用百分比，未拿到套餐信息时为 null。 */
+    val usageProgress: Int?
+        get() = if (trafficTotal > 0) {
+            (trafficUsed * 100L / trafficTotal).coerceIn(0L, 100L).toInt()
+        } else {
+            null
+        }
     val contentText: String
         get() = traffic?.directionalText ?: ""
 
@@ -90,6 +99,8 @@ private val NotificationParams.extended: ExtendedNotificationParams
         liveUpdate = liveUpdateNotification,
         showUpload = liveUpdateShowUpload,
         fixedWidth = liveUpdateFixedWidth,
+        trafficUsed = trafficUsed,
+        trafficTotal = trafficTotal,
     )
 
 /** 把字节/秒换算成 0..100 的进度值。 */
@@ -183,16 +194,21 @@ internal class NotificationModule(
             GlobalState.log("Promoted notifications are unavailable for this app")
         }
 
-        val progressStyle = Notification.ProgressStyle()
-            // 进度条按下行速率填充，上行速率用一个标记点表示，两者共用 0..100 的刻度。
-            .setProgress(params.down.toProgressPercent())
-            .setProgressPoints(
-                listOf(
-                    Notification.ProgressStyle.Point(params.up.toProgressPercent())
-                        .setColor(LIVE_UPDATE_UPLOAD_COLOR),
-                ),
-            )
-            .setStyledByProgress(true)
+        val progressStyle = Notification.ProgressStyle().setStyledByProgress(true)
+        val usage = params.usageProgress
+        if (usage != null) {
+            // 已有套餐流量信息时，进度条表示已用比例
+            progressStyle.setProgress(usage)
+        } else {
+            // 拿不到套餐信息，退回按实时速率填充，上行用标记点表示
+            progressStyle.setProgress(params.down.toProgressPercent())
+                .setProgressPoints(
+                    listOf(
+                        Notification.ProgressStyle.Point(params.up.toProgressPercent())
+                            .setColor(LIVE_UPDATE_UPLOAD_COLOR),
+                    ),
+                )
+        }
 
         return Notification.Builder(service, GlobalState.NOTIFICATION_CHANNEL).apply {
             setSmallIcon(R.drawable.ic_service)

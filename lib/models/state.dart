@@ -174,6 +174,8 @@ abstract class SharedState with _$SharedState {
     @Default(true) bool liveUpdateNotification,
     @Default(true) bool liveUpdateShowUpload,
     @Default(true) bool liveUpdateFixedWidth,
+    @Default(0) int trafficUsed,
+    @Default(0) int trafficTotal,
   }) = _SharedState;
 
   factory SharedState.fromJson(Map<String, Object?> json) =>

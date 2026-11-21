@@ -380,6 +380,8 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             liveUpdateNotification = state.liveUpdateNotification,
             liveUpdateShowUpload = state.liveUpdateShowUpload,
             liveUpdateFixedWidth = state.liveUpdateFixedWidth,
+            trafficUsed = state.trafficUsed,
+            trafficTotal = state.trafficTotal,
         )
     }
 }

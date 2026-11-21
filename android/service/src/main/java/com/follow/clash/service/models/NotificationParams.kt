@@ -8,4 +8,6 @@ data class NotificationParams(
     val liveUpdateNotification: Boolean = true,
     val liveUpdateShowUpload: Boolean = true,
     val liveUpdateFixedWidth: Boolean = true,
+    val trafficUsed: Long = 0L,
+    val trafficTotal: Long = 0L,
 )
