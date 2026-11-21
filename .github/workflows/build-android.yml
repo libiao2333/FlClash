@@ -144,6 +144,20 @@ jobs:
             echo "- versionCode: $build_number"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # 配了签名却没产出带签名的包时直接失败，避免把 -unsigned 的包当成成品发出去
+      - name: Verify APK signature
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          if [ ! -f "$apk" ]; then
+            echo "::error::未找到 $apk，签名配置没有生效"
+            ls -l build/app/outputs/flutter-apk/ || true
+            grep -E 'keystore|keyAlias|storePassword' android/local.properties || true
+            exit 1
+          fi
+          apksigner=$(find "$ANDROID_SDK_ROOT/build-tools" -maxdepth 2 -name apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs "$apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
