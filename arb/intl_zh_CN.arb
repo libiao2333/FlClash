@@ -61,6 +61,7 @@
   "autoCheckUpdate": "自动检查更新",
   "checkCertificate": "校验 TLS 证书",
   "checkCertificateDesc": "关闭证书校验后，订阅和备份可能遭中间人攻击。",
+  "adBlock": "广告拦截",
   "accessControl": "访问控制",
   "edit": "编辑",
   "confirm": "确定",

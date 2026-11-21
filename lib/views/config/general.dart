@@ -360,6 +360,11 @@ class GeneralView extends ConsumerWidget {
         select: (state) => state.onlyStatisticsProxy,
         update: (state, value) => state.copyWith(onlyStatisticsProxy: value),
       ),
+      _appSettingToggle(
+        title: (l) => l.adBlock,
+        select: (state) => state.adBlock,
+        update: (state, value) => state.copyWith(adBlock: value),
+      ),
     ];
   }
 

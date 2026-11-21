@@ -276,6 +276,24 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   confineProviders('rule-providers', rulesProviderDirectoryName);
   injectUnconfinedProviders('proxy-providers', data.injectedProxyProviders);
   injectUnconfinedProviders('rule-providers', data.injectedRuleProviders);
+  if (data.adBlock) {
+    final rawRuleProviders = rawConfig['rule-providers'];
+    final ruleProviders = rawRuleProviders is Map
+        ? Map<String, dynamic>.from(rawRuleProviders)
+        : <String, dynamic>{};
+    if (!ruleProviders.containsKey('adblock')) {
+      rawConfig['rule-providers'] = {
+        'adblock': {
+          'type': 'http',
+          'behavior': 'domain',
+          'format': 'yaml',
+          'url': 'https://anti-ad.net/clash.yaml',
+          'interval': 86400,
+        },
+        ...ruleProviders,
+      };
+    }
+  }
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
@@ -378,6 +396,10 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     rawConfig['proxy-groups'] = data.proxyGroups
         .map((item) => item.definition)
         .toList();
+  }
+  if (data.adBlock &&
+      !rules.any((rule) => Rule.parse(rule).ruleSets.contains('adblock'))) {
+    rules = ['RULE-SET,adblock,REJECT', ...rules];
   }
   rawConfig['rules'] = [...mitm.rules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));

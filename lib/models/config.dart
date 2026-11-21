@@ -269,6 +269,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(true) bool showTrayTitle,
     @Default(true) bool monochromeTrayIcon,
     @Default(true) bool checkCertificate,
+    @Default(false) bool adBlock,
     @Default(defaultUserAgents)
     @JsonKey(readValue: _readUserAgents)
     List<String> userAgents,

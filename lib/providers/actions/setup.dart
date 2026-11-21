@@ -7,6 +7,7 @@ typedef _SetupInputs = (
   PatchClashConfig,
   NetworkProps,
   SetupParams,
+  {bool adBlock},
 );
 
 typedef BuiltProfile = ({
@@ -424,6 +425,7 @@ class SetupAction extends _$SetupAction {
           _effectivePatchConfig(ref.read(patchClashConfigProvider)),
           ref.read(networkSettingProvider),
           _appliedParams,
+          adBlock: ref.read(appSettingProvider).adBlock,
         );
   }
 
@@ -551,6 +553,7 @@ class SetupAction extends _$SetupAction {
             : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
         mitmModules: setupState.mitmModules,
+        adBlock: ref.read(appSettingProvider).adBlock,
       ),
     );
     if (profileBase == null) {
@@ -756,6 +759,7 @@ class SetupAction extends _$SetupAction {
         realPatchConfig,
         networkSetting,
         _appliedParams,
+        adBlock: ref.read(appSettingProvider).adBlock,
       ),
       _ => null,
     };

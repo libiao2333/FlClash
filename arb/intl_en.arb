@@ -61,6 +61,7 @@
   "autoCheckUpdate": "Auto check for updates",
   "checkCertificate": "Verify TLS certificates",
   "checkCertificateDesc": "With TLS verification off, subscriptions and backups are open to man-in-the-middle attacks.",
+  "adBlock": "Ad blocking",
   "accessControl": "Access control",
   "edit": "Edit",
   "confirm": "Confirm",

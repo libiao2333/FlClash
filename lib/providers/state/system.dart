@@ -40,8 +40,13 @@ CoreOptions coreOptions(Ref ref) {
 }
 
 @riverpod
-({PatchClashConfig patchConfig, bool appendSystemDns, bool bypassPrivateRoute})
-    setupPatch(Ref ref) {
+({
+  PatchClashConfig patchConfig,
+  bool appendSystemDns,
+  bool bypassPrivateRoute,
+  bool adBlock,
+})
+setupPatch(Ref ref) {
   return (
     patchConfig: ref.watch(
       patchClashConfigProvider.select((state) => state.setupOnly),
@@ -54,6 +59,7 @@ CoreOptions coreOptions(Ref ref) {
         ref.watch(
           networkSettingProvider.select((state) => state.bypassPrivateRoute),
         ),
+    adBlock: ref.watch(appSettingProvider.select((state) => state.adBlock)),
   );
 }
 

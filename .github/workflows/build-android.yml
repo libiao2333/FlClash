@@ -79,12 +79,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # freezed / json_serializable 的产物是提交在仓库里的，改了模型必须重新生成。
+      # freezed / json_serializable 的产物是提交在仓库里的，改了模型必须重新生成；
+      # arb 里的文案由 intl_utils 生成 messages_*.dart，新增文案同样必须重新生成。
       # 生成期间先关掉原生 build hook，免得为了跑 Dart 代码去编译 Go 和 Rust。
-      - name: Generate models
+      - name: Generate models and localizations
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
           dart run build_runner build --delete-conflicting-outputs
+          dart run intl_utils:generate
           yq -i '.hooks.user_defines.setup.build_assets = true | .hooks.user_defines.rust_api.build_assets = true' pubspec.yaml
 
       # 仓库 Settings → Secrets and variables → Actions 里配置以下四个后，
