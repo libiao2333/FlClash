@@ -24,6 +24,12 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    # 放在 job 级别，step 的 if 条件才能读到 env（step 自己的 env 在 if 阶段还不可用）。
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,17 +87,18 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           yq -i '.hooks.user_defines.setup.build_assets = true | .hooks.user_defines.rust_api.build_assets = true' pubspec.yaml
 
-      # 可选：在仓库 Settings → Secrets 里配好 KEYSTORE / KEY_ALIAS /
-      # STORE_PASSWORD / KEY_PASSWORD 就会用正式签名，否则走 debug 签名。
+      # 仓库 Settings → Secrets and variables → Actions 里配置以下四个后，
+      # 产物会自动用你的密钥签名（app-release.apk，包名 com.follow.clash）：
+      #   KEYSTORE       keystore 文件的 base64（单行）
+      #   KEY_ALIAS      flclash
+      #   STORE_PASSWORD keystore 口令
+      #   KEY_PASSWORD   密钥口令（PKCS12 下与上面的相同）
+      # 没配置时输出未签名 APK（app-release-unsigned.apk），需本地 apksigner 手动签。
       - name: Configure release signing
         if: env.KEYSTORE_BASE64 != ''
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/keystore.jks
+          touch android/local.properties
           {
             echo "keyAlias=$KEY_ALIAS"
             echo "storePassword=$STORE_PASSWORD"
