@@ -25,10 +25,8 @@ import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.Traffic
 import com.follow.clash.service.models.directionalText
-import com.follow.clash.service.models.downRateText
 import com.follow.clash.service.models.formatRate
 import com.follow.clash.service.models.getSpeedTraffic
-import com.follow.clash.service.models.upRateText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -46,6 +44,9 @@ import kotlinx.coroutines.launch
  */
 private const val LIVE_UPDATE_FULL_SCALE = 1024L * 1024L
 
+/** 展开卡片的大标题。 */
+private const val LIVE_UPDATE_TITLE = "FlClash"
+
 /** 上行速率标记点颜色，对应 systemBlue。 */
 private const val LIVE_UPDATE_UPLOAD_COLOR = 0xFF0A84FF.toInt()
 
@@ -60,14 +61,6 @@ private data class ExtendedNotificationParams(
 ) {
     val contentText: String
         get() = traffic?.directionalText ?: ""
-
-    /** 展开卡片的大字：下行速率。 */
-    val liveTitle: String
-        get() = traffic?.downRateText ?: title
-
-    /** 展开卡片的第二行：上行速率。 */
-    val liveText: String
-        get() = traffic?.upRateText ?: contentText
 
     /**
      * 状态栏胶囊文案：上传在左、下载在右。关掉“显示上传”后只剩下载，
@@ -203,8 +196,8 @@ internal class NotificationModule(
 
         return Notification.Builder(service, GlobalState.NOTIFICATION_CHANNEL).apply {
             setSmallIcon(R.drawable.ic_service)
-            setContentTitle(params.liveTitle)
-            setContentText(params.liveText)
+            setContentTitle(LIVE_UPDATE_TITLE)
+            setContentText(params.contentText)
             setContentIntent(contentIntent)
             setCategory(Notification.CATEGORY_SERVICE)
             setOngoing(true)
