@@ -117,6 +117,11 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
           GH_TOKEN: ${{ github.token }}
+          # 签名参数走 Gradle 属性，避免被 flutter 重写 local.properties 冲掉
+          ORG_GRADLE_PROJECT_RELEASE_STORE_FILE: keystore.jks
+          ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           # 没有 release keystore 时产出未签名 APK，由本地 apksigner 手动签名，
           # 避免 runner 每次临时生成的 debug 签名导致覆盖安装失败。
           ORG_GRADLE_PROJECT_unsigned: "true"

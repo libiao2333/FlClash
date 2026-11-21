@@ -13,10 +13,16 @@ val localProperties = Properties().apply {
     }
 }
 
-val releaseStoreFile = file("keystore.jks")
-val releaseStorePassword = localProperties.getProperty("storePassword")
-val releaseKeyAlias = localProperties.getProperty("keyAlias")
-val releaseKeyPassword = localProperties.getProperty("keyPassword")
+// 签名参数优先取 Gradle 属性（CI 用 ORG_GRADLE_PROJECT_* 注入），
+// 因为 flutter build 会重写 android/local.properties，写在里面的值可能被冲掉。
+fun signingParameter(name: String, fallbackKey: String): String? =
+    (project.findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+        ?: localProperties.getProperty(fallbackKey)
+
+val releaseStoreFile = file((project.findProperty("RELEASE_STORE_FILE") as String?) ?: "keystore.jks")
+val releaseStorePassword = signingParameter("RELEASE_STORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingParameter("RELEASE_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingParameter("RELEASE_KEY_PASSWORD", "keyPassword")
 val hasReleaseSigning = releaseStoreFile.exists() &&
     releaseStorePassword != null &&
     releaseKeyAlias != null &&
